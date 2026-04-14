@@ -160,8 +160,10 @@ class Twitch(object):
         json_data = copy.deepcopy(GQLOperations.WithIsStreamLiveQuery)
         json_data["variables"] = {"id": streamer.channel_id}
         response = self.post_gql_request(json_data)
-        if response != {}:
-            stream = response["data"]["user"]["stream"]
+        if response != {} and response.get("data") is not None:
+            if response["data"].get("user") is None:
+                raise StreamerIsOfflineException
+            stream = response["data"]["user"].get("stream")
             if stream is not None:
                 return stream["id"]
             else:
@@ -172,8 +174,8 @@ class Twitch(object):
             GQLOperations.VideoPlayerStreamInfoOverlayChannel)
         json_data["variables"] = {"channel": streamer.username}
         response = self.post_gql_request(json_data)
-        if response != {}:
-            if response["data"]["user"]["stream"] is None:
+        if response != {} and response.get("data") is not None:
+            if response["data"].get("user") is None or response["data"]["user"].get("stream") is None:
                 raise StreamerIsOfflineException
             else:
                 return response["data"]["user"]
